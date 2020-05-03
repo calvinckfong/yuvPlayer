@@ -7,14 +7,13 @@
 #include <pthread.h>
 
 int fps = 0;
-extern int yuvWidth;
-extern int yuvHeight;
-extern int yuvSize;
+extern int scale;
+extern int srcWidth;
+extern int srcHeight;
 extern int pixFormat;
-extern char *yuvdata;
+extern char *dstdata;
 extern int run;
 extern sem_t picNum;
-extern int read_frame(void);
 
 void *event_loop(void *arg)
 {
@@ -24,9 +23,9 @@ void *event_loop(void *arg)
 		SDL_WaitEvent(&event);
 		switch(event.key.keysym.sym)
 		{
-	                case SDLK_q:
-        	                run = 0;
-                	        break;
+			case SDLK_q:
+					run = 0;
+					break;
 			default:
 				break;
 		}
@@ -52,7 +51,7 @@ void *thread_show(void *arg) {
   }
 
   window = SDL_CreateWindow("YUV speed test", SDL_WINDOWPOS_UNDEFINED,
-                            SDL_WINDOWPOS_UNDEFINED, yuvWidth, yuvHeight,
+                            SDL_WINDOWPOS_UNDEFINED, srcWidth*scale, srcHeight*scale,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if (!window) {
     fprintf(stderr, "Couldn't set create window: %s\n", SDL_GetError());
@@ -67,7 +66,7 @@ void *thread_show(void *arg) {
   SDL_GetRendererInfo(renderer, &info);
   printf("Using %s rendering\n", info.name);
 
-  texture = SDL_CreateTexture(renderer, pixFormat, SDL_TEXTUREACCESS_STREAMING, yuvWidth, yuvHeight);
+  texture = SDL_CreateTexture(renderer, pixFormat, SDL_TEXTUREACCESS_STREAMING, srcWidth, srcHeight);
   if (!texture) {
     fprintf(stderr, "Couldn't set create texture: %s\n", SDL_GetError());
     return (void*)7;
@@ -87,7 +86,7 @@ void *thread_show(void *arg) {
       fps = 0;
       SDL_SetWindowTitle(window, title);
     }
-    SDL_UpdateTexture(texture, NULL, yuvdata, yuvWidth * 2);
+    SDL_UpdateTexture(texture, NULL, dstdata, srcWidth*3);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
